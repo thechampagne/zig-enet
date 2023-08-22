@@ -56,6 +56,11 @@ pub const ENet = struct {
         return &enet_handle;
     }
 
+    /// It is safe to call this function without initializing ENet.
+    pub fn get_version() enet.ENetVersion {
+        return enet.ENET_VERSION;
+    }
+
     pub fn deinit(self: *Self) void {
         std.debug.assert(self == &enet_handle);
 
