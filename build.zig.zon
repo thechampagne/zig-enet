@@ -1,0 +1,10 @@
+.{
+    .name = "zig-enet",
+    .version = "0.1.0",
+    .dependencies = .{
+        .libenet = .{
+            .url = "https://github.com/DagothGares/libenet/archive/fc21b5af748431f0bb37123f3e1b9a1d28e88e0b.tar.gz",
+            .hash = "1220f787a706d57077d489760c9282d1a27dabc9da8609720043468db6b4926c0f9e",
+        },
+    },
+}
