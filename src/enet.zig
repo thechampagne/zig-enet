@@ -62,6 +62,7 @@ pub const ENet = struct {
     }
 
     pub fn deinit(self: *Self) void {
+        // There is only one valid pointer value for the handle; the one declared in this library.
         std.debug.assert(self == &enet_handle);
 
         enet_handle.mutex.lock();
