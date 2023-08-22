@@ -85,8 +85,8 @@ fn enet_malloc_testfn(size: usize) callconv(.C) ?*anyopaque {
 
 test ENet {
     {
-    var handle = try ENet.init();
-    defer handle.deinit();
+        var handle = try ENet.init();
+        defer handle.deinit();
         var handle2 = try ENet.init();
         defer handle2.deinit();
 
