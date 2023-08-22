@@ -72,7 +72,64 @@ pub const ENet = struct {
     }
 };
 
+fn enet_malloc_testfn(size: usize) callconv(.C) ?*anyopaque {
+    _ = size;
+    return null;
+}
+
 test ENet {
+    {
     var handle = try ENet.init();
     defer handle.deinit();
+        var handle2 = try ENet.init();
+        defer handle2.deinit();
+
+        try std.testing.expect(handle == handle2);
+    }
+
+    try std.testing.expect(enet_handle.ref_count == 0);
+
+    {
+        var handle3 = try ENet.init_callbacks(
+            enet.ENET_VERSION_CREATE(1, 3, 0),
+            &.{
+                .malloc = null,
+                .free = null,
+                .no_memory = null,
+            },
+        );
+        defer handle3.deinit();
+    }
+
+    try std.testing.expect(enet_handle.ref_count == 0);
+
+    try std.testing.expectError(
+        ENet.InitError.ENet_Initialization_Failure,
+        ENet.init_callbacks(
+            enet.ENET_VERSION_CREATE(1, 3, 0),
+            &.{
+                // NOTE: Possible Zig bug: setting malloc or free to undefined instead of an actual
+                // function will cause the other function to also become undefined if it was set as
+                // null
+                .malloc = &enet_malloc_testfn,
+                .free = null,
+                .no_memory = undefined,
+            },
+        ),
+    );
+
+    {
+        var handle4 = try ENet.init();
+        defer handle4.deinit();
+
+        try std.testing.expectError(
+            ENet.InitError.ENet_Already_Initialized,
+            ENet.init_callbacks(
+                enet.ENET_VERSION_CREATE(1, 3, 0),
+                undefined,
+            ),
+        );
+    }
 }
+
+// TODO: add multithread test for ENet struct
