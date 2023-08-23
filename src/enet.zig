@@ -1,5 +1,7 @@
 const std = @import("std");
 
+const testing = std.testing;
+
 const enet = @cImport({
     @cInclude("enet/enet.h");
 });
@@ -97,10 +99,10 @@ test ENet {
         var handle2 = try ENet.init();
         defer handle2.deinit();
 
-        try std.testing.expect(handle == handle2);
+        try testing.expect(handle == handle2);
     }
 
-    try std.testing.expect(enet_handle.ref_count == 0);
+    try testing.expect(enet_handle.ref_count == 0);
 
     {
         var handle3 = try ENet.init_callbacks(
@@ -114,9 +116,9 @@ test ENet {
         defer handle3.deinit();
     }
 
-    try std.testing.expect(enet_handle.ref_count == 0);
+    try testing.expect(enet_handle.ref_count == 0);
 
-    try std.testing.expectError(
+    try testing.expectError(
         ENet.InitError.ENet_Initialization_Failure,
         ENet.init_callbacks(
             enet.ENET_VERSION_CREATE(1, 3, 0),
@@ -135,7 +137,7 @@ test ENet {
         var handle4 = try ENet.init();
         defer handle4.deinit();
 
-        try std.testing.expectError(
+        try testing.expectError(
             ENet.InitError.ENet_Already_Initialized,
             ENet.init_callbacks(
                 enet.ENET_VERSION_CREATE(1, 3, 0),
