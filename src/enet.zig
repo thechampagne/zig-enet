@@ -8,7 +8,7 @@ var enet_handle: ENet = .{};
 
 pub const ENet = struct {
     ref_count: u16 = 0,
-    mutex: std.Thread.Mutex = .{},
+    rw_lock: std.Thread.RwLock = .{},
 
     // TODO: put these in a helper struct for enet.ENetCallbacks instead
     pub const MallocFn = ?*const fn (usize) callconv(.C) ?*anyopaque;
@@ -20,8 +20,8 @@ pub const ENet = struct {
     const Self = @This();
 
     pub fn init() InitError!*Self {
-        enet_handle.mutex.lock();
-        defer enet_handle.mutex.unlock();
+        enet_handle.rw_lock.lock();
+        defer enet_handle.rw_lock.unlock();
 
         if (enet_handle.ref_count == 0) {
             if (enet.enet_initialize() != 0) {
@@ -34,16 +34,17 @@ pub const ENet = struct {
         return &enet_handle;
     }
 
-    /// This function will error if ENet is already initialized.
     /// TODO: provide a structure for setting ENetCallbacks from the user's choice of allocator
     pub fn init_callbacks(
         version: enet.ENetVersion,
         inits: *const enet.ENetCallbacks,
     ) InitError!*Self {
-        enet_handle.mutex.lock();
-        defer enet_handle.mutex.unlock();
+        enet_handle.rw_lock.lock();
+        defer enet_handle.rw_lock.unlock();
 
-        if (enet_handle.ref_count > 0) {
+        // You cannot replace ENet's callbacks while it's running, since it may have already allocated
+        // memory, and replacing free() would cause a crash (or, at least, a leak) down the line
+        if (enet_handle.ref_count != 0) {
             return InitError.ENet_Already_Initialized;
         }
 
@@ -65,16 +66,22 @@ pub const ENet = struct {
         // There is only one valid pointer value for the handle; the one declared in this library.
         std.debug.assert(self == &enet_handle);
 
-        enet_handle.mutex.lock();
-        defer enet_handle.mutex.unlock();
+        enet_handle.rw_lock.lock();
+        defer enet_handle.rw_lock.unlock();
 
-        if (enet_handle.ref_count > 0) {
-            enet_handle.ref_count -= 1;
+        enet_handle.ref_count -= 1;
 
-            if (enet_handle.ref_count == 0) {
-                enet.enet_deinitialize();
-            }
+        if (enet_handle.ref_count == 0) {
+            enet.enet_deinitialize();
         }
+    }
+
+    pub inline fn validate(self: *const Self) void {
+        std.debug.assert(self == &enet_handle);
+
+        enet_handle.rw_lock.lockShared();
+        defer enet_handle.rw_lock.unlockShared();
+        std.debug.assert(self.ref_count > 0);
     }
 };
 
