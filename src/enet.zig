@@ -2,7 +2,7 @@ const std = @import("std");
 
 const testing = std.testing;
 
-const enet = @cImport({
+pub const enet = @cImport({
     @cInclude("enet/enet.h");
 });
 
@@ -147,3 +147,5 @@ test ENet {
 }
 
 // TODO: add multithread test for ENet struct
+
+pub const Address = @import("address.zig");
