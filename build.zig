@@ -15,6 +15,11 @@ pub fn build(b: *std.Build) void {
     });
     const enet = enet_dep.artifact("libenet");
 
+    _ = b.addModule("zig-enet", .{
+        .source_file = .{ .path = "src/enet.zig" },
+        .dependencies = &[_]std.Build.ModuleDependency{},
+    });
+
     const lib_type = b.option(
         build_type,
         "build_type",
